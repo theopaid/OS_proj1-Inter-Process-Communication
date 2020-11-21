@@ -29,7 +29,7 @@ void *safe_calloc(long elementsNum, size_t size)
 int validArgs(int argc, char *argv[])
 {
 
-    if (argc == 5)
+    if (argc == 3)
     {
         return 1;
     }
@@ -39,18 +39,14 @@ int validArgs(int argc, char *argv[])
     }
 }
 
-void getArgs(char **datasetX, char **datasetY, char *argv[])
+void getArgs(int *propability, char *argv[])
 {
 
-    for (int i = 1; i < 5; i = i + 2)
+    for (int i = 1; i < 3; i = i + 2)
     {
-        if (!strcmp(argv[i], "-x"))
+        if (!strcmp(argv[i], "-p"))
         {
-            *datasetX = argv[i + 1];
-        }
-        else if (!strcmp(argv[i], "-w"))
-        {
-            *datasetY = argv[i + 1];
+            *propability = atoi(argv[i + 1]);
         }
     }
 }
@@ -60,10 +56,15 @@ void printInsights()
     puts(" ");
     puts("|========== Insights ==========|");
     puts(" ");
-    printHashingBenchmarks();
-    printMatchesCount();
-    printVisitedSpecNodesCount();
-    printExecTime();
+    //printHashingBenchmarks();
+    //printMatchesCount();
+    //printVisitedSpecNodesCount();
+    //printExecTime();
     puts(" ");
     puts("|==============================|");
+}
+
+int main(void)
+{
+    return 0;
 }

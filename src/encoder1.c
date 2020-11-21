@@ -2,4 +2,5 @@
 
 int main(void)
 {
+    puts("hello there");
 }
