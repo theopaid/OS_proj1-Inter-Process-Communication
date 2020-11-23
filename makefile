@@ -1,36 +1,41 @@
-# This makefile builds and manages the project.
+# # This makefile builds and manages the project.
 
-PROGRAM_NAME = main
+# PROGRAM_NAME = main
 
-CC = gcc
+# CC = gcc
 
 # Compilation flags
-CFLAGS  = -std=c99
-CFLAGS += -g
-CFLAGS += -Wall
-CFLAGS += -Wextra
-CFLAGS += -pedantic
-#CFLAGS += -Werror
+ CFLAGS  = -std=c99
+ CFLAGS += -g
+ CFLAGS += -Wall
+ CFLAGS += -Wextra
+ CFLAGS += -pedantic
+ #CFLAGS += -Werror
 
-# Test flags
-TEST_FLAGS  = -std=c99
-TEST_FLAGS += -Wall
-TEST_FLAGS += -I./test
+ LDFLAGS = -lpthread
+ LDFLAGS += -lcrypto
 
-# Valgrind flags
-VFLAGS  = --quiet
-VFLAGS += --tool=memcheck
-VFLAGS += --leak-check=full
-VFLAGS += --error-exitcode=1
+# # Test flags
+# TEST_FLAGS  = -std=c99
+# TEST_FLAGS += -Wall
+# TEST_FLAGS += -I./test
 
-SOURCE := $(shell find ./src -name '*.c' -not -name 'main.c')
-MAIN := 'src/main.c'
+# # Valgrind flags
+# VFLAGS  = --quiet
+# VFLAGS += --tool=memcheck
+# VFLAGS += --leak-check=full
+# VFLAGS += --error-exitcode=1
 
-SOURCES=$(shell find ./src -name '*.c')
+# SOURCE := $(shell find ./src -name '*.c' -not -name 'main.c')
+# MAIN := 'src/main.c'
 
-OBJECTS=$(SOURCES:.c=.o)
+# SOURCES=$(shell find ./src -name '*.c')
 
-EXECS=$(SOURCES:%.c=%)
+# OBJECTS=$(SOURCES:.c=.o)
+
+# EXECS=$(SOURCES:%.c=%)
+
+######################
 
 # .PHONY: usage
 # usage:
@@ -76,17 +81,60 @@ EXECS=$(SOURCES:%.c=%)
 # .PHONY: r
 # r: run
 
+####################
+
+# .PHONY: all
+# all: $(OBJECTS) $(EXECS)
+
+# .c:
+# 	$(CC) $(CFLAGS) $< -o $@
+
+# .o.: 
+# 	$(CC) $^ $(LDFLAGS) -o $@
+
+# .PHONY: clean
+# clean:
+# 	-@ $(RM) src/*.o 
+# 	-@ $(RM) $(EXECS)
+
 .PHONY: all
-all: $(OBJECTS) $(EXECS)
+all: clean channel encoder1 encoder2 userInterface1 userInterface2
 
-.c.o:
-	$(CC) $(CFLAGS) $< -o $@
+channel = src/channel.o src/sharedMemory.o src/utils.o
+encoder1 = src/encoder1.o src/sharedMemory.o src/utils.o
+encoder2 = src/encoder2.o src/sharedMemory.o src/utils.o
+userInterface1 = src/userInterface1.o src/sharedMemory.o src/utils.o
+userInterface2 = src/userInterface2.o src/sharedMemory.o src/utils.o
 
-.o.: 
-	$(CC) $^ $(LDFLAGS) -o $@
+channel : $(channel)
+		cc $(CC_FLAGS) -o channel $(channel) $(LDFLAGS)
+
+encoder1 : $(encoder1)
+		cc $(CC_FLAGS) -o encoder1 $(encoder1) $(LDFLAGS)
+
+encoder2 : $(encoder2)
+		cc $(CC_FLAGS) -o encoder2 $(encoder2) $(LDFLAGS)
+
+userInterface1 : $(userInterface1)
+		cc $(CC_FLAGS) -o userInterface1 $(userInterface1) $(LDFLAGS)
+
+userInterface2 : $(userInterface2)
+		cc $(CC_FLAGS) -o userInterface2 $(userInterface2) $(LDFLAGS)
+		
+
+# src/channel.o : hdr/includes.h
+# src/encoder1.o : hdr/includes.h
+# src/encoder2.o : hdr/includes.h
+# src/sharedMemory.o : hdr/includes.h
+# src/userInterface1.o : hdr/includes.h
+# src/userInterface2.o : hdr/includes.h
+# src/utils.o : hdr/includes.h
 
 .PHONY: clean
-clean:
-	-@ $(RM) src/*.o 
-	-@ $(RM) $(EXECS)
-
+clean :
+		@echo "Cleaning ..."
+		rm -f channel $(channel)
+		rm -f encoder1 $(encoder1)
+		rm -f encoder2 $(encoder2)
+		rm -f userInterface1 $(userInterface1)
+		rm -f userInterface2 $(userInterface2)

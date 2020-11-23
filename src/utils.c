@@ -26,7 +26,7 @@ void *safe_calloc(long elementsNum, size_t size)
     return ptr;
 }
 
-int validArgs(int argc, char *argv[])
+int validArgs(int argc)
 {
 
     if (argc == 3)
@@ -64,7 +64,8 @@ void printInsights()
     puts("|==============================|");
 }
 
-int main(void)
+void perrorexit(char *message)
 {
-    return 0;
+    perror(message);
+    exit(EXIT_FAILURE);
 }
