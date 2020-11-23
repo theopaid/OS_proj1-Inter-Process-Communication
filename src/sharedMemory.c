@@ -70,8 +70,3 @@ void semFailed(sem_t *sem, char *errorMsg)
         exit(EXIT_FAILURE);
     }
 }
-
-int main(void)
-{
-    return 0;
-}
