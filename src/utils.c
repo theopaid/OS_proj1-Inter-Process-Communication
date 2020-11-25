@@ -121,3 +121,13 @@ bool isMsgTerm(char *msg)
     bool done = (strcmp(msg, "TERM") == 0);
     return done;
 }
+
+void zeroOutString(char *msg)
+{
+    memset(msg, 0, BLOCK_SIZE);
+}
+
+void zeroOutHashedString(unsigned char *msg)
+{
+    memset(msg, 0, MD5_DIGEST_LENGTH);
+}

@@ -30,6 +30,15 @@ int main(int argc, char **argv)
 
 void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails *connectionChannel)
 {
+    char msgFromP1[BLOCK_SIZE];
+    zeroOutString(msgFromP1);
+    char msgFromChannel[BLOCK_SIZE];
+    zeroOutString(msgFromChannel);
+    char clearTextMsg[BLOCK_SIZE];
+    zeroOutString(clearTextMsg);
+    char hashedString[MD5_DIGEST_LENGTH + 1];
+    //zeroOutHashedString(hashedString);
+    char hashFromMsg[MD5_DIGEST_LENGTH + 1];
     while (true)
     {
         sem_wait(connectionP1->semConsumed);
@@ -38,37 +47,82 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
             //printf("[LOG] ENC1: Reading \"%s\"\n", connectionP1->shmBlock);
             if (isMsgTerm(connectionP1->shmBlock))
             {
+
                 // free and detach
+                strncpy(connectionChannel->shmBlock, connectionP1->shmBlock, BLOCK_SIZE);
+                sem_post(connectionChannel->semProduced);
+                break;
             }
-            char msgFromP1[BLOCK_SIZE];
             strncpy(msgFromP1, connectionP1->shmBlock, BLOCK_SIZE);
-            memset(connectionP1->shmBlock, 0, BLOCK_SIZE);
-            // edit the message from P1 accordingly
-            strncpy(connectionChannel->shmBlock, msgFromP1, BLOCK_SIZE);
+            zeroOutString(connectionP1->shmBlock);
+            zeroOutHashedString(hashedString);
+            MD5(msgFromP1, sizeof(msgFromP1), hashedString);
+            zeroOutString(connectionChannel->shmBlock);
+            strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+            strcat(connectionChannel->shmBlock, msgFromP1);
+
             sem_post(connectionChannel->semProduced);
         }
         else
         {
             continue;
         }
-        sem_wait(connectionChannel->semConsumed);
-        if (strlen(connectionChannel->shmBlock) > 0)
+        while (true) // in order to resend the message as many times as needed
         {
-            //printf("[LOG] ENC1: Reading \"%s\"\n", connectionChannel->shmBlock);
-            if (isMsgTerm(connectionChannel->shmBlock))
+            sem_wait(connectionChannel->semConsumed);
+            if (strlen(connectionChannel->shmBlock) > 0)
             {
-                // free and detach
+                //printf("[LOG] ENC1: Reading \"%s\"\n", connectionChannel->shmBlock);
+                bool resendLastMsg = (strcmp(connectionChannel->shmBlock, "RESEND") == 0);
+                if (isMsgTerm(connectionChannel->shmBlock))
+                {
+                    // free and detach
+                    strncpy(connectionP1->shmBlock, connectionChannel->shmBlock, BLOCK_SIZE);
+                    sem_post(connectionP1->semProduced);
+                    break;
+                }
+                if (resendLastMsg)
+                {
+                    zeroOutHashedString(hashedString);
+                    MD5(msgFromP1, sizeof(msgFromP1), hashedString);
+                    zeroOutString(connectionChannel->shmBlock);
+                    strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+                    strcat(connectionChannel->shmBlock, msgFromP1);
+                    sem_post(connectionChannel->semProduced);
+                }
+                else
+                {
+                    strncpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
+                    zeroOutString(connectionChannel->shmBlock);
+                    strcpy(clearTextMsg, msgFromChannel + 16);
+                    zeroOutHashedString(hashedString);
+                    MD5(clearTextMsg, sizeof(clearTextMsg), hashedString);
+                    hashedString[16] = 0;
+                    strncpy(hashFromMsg, msgFromChannel, 16);
+                    hashFromMsg[16] = 0;
+                    if (strcmp(hashedString, hashFromMsg) != 0)
+                    { // msg must be resent
+                        //puts("hmm1");
+                        printf("resending: %s\n", clearTextMsg);
+                        printf("%s\n", hashedString);
+                        printf("%s\n", hashFromMsg);
+                        printf("og msg:\n %s\n", msgFromChannel);
+                        strncpy(connectionChannel->shmBlock, "RESEND", BLOCK_SIZE);
+                        sem_post(connectionChannel->semProduced);
+                    }
+                    else
+                    {
+                        // edit the message from Channel accordingly
+                        strncpy(connectionP1->shmBlock, msgFromChannel + 16, BLOCK_SIZE);
+                        sem_post(connectionP1->semProduced);
+                        break;
+                    }
+                }
             }
-            char msgFromChannel[BLOCK_SIZE];
-            strncpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
-            // edit the message from Channel accordingly
-            memset(connectionChannel->shmBlock, 0, BLOCK_SIZE);
-            strncpy(connectionP1->shmBlock, msgFromChannel, BLOCK_SIZE);
-            sem_post(connectionP1->semProduced);
-        }
-        else
-        {
-            continue;
+            else
+            {
+                continue;
+            }
         }
     }
 }
