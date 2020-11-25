@@ -15,4 +15,12 @@ void printInsights();
 
 void perrorexit(char *message);
 
+void signalP2Connection(ConnectionDetails *connectionP1, ConnectionDetails *connectionChannel);
+
+void awaitP2Connection(ConnectionDetails *connectionENC1);
+
+void awaitUserInput(char *shmBlock, char *username);
+
+bool isMsgTerm(char *msg);
+
 #endif
