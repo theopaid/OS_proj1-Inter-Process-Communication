@@ -23,4 +23,8 @@ void awaitUserInput(char *shmBlock, char *username);
 
 bool isMsgTerm(char *msg);
 
+void zeroOutString(char *msg);
+
+void zeroOutHashedString(unsigned char *msg);
+
 #endif

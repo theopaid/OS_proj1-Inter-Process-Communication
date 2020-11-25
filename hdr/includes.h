@@ -15,6 +15,7 @@
 #include <stdbool.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <openssl/md5.h>
 
 #include "sharedMemory.h"
 #include "utils.h"
