@@ -69,3 +69,55 @@ void perrorexit(char *message)
     perror(message);
     exit(EXIT_FAILURE);
 }
+
+void signalP2Connection(ConnectionDetails *connectionP1, ConnectionDetails *connectionChannel)
+{
+    awaitP2Connection(connectionChannel);
+    strncpy(connectionP1->shmBlock, "P2_CONNECTED", BLOCK_SIZE);
+    sem_post(connectionP1->semProduced);
+}
+
+void awaitP2Connection(ConnectionDetails *connectionENC1)
+{
+    while (true)
+    {
+        sem_wait(connectionENC1->semConsumed); // wait for the ENC1 to write a message to P1
+        if (strlen(connectionENC1->shmBlock) > 0)
+        {
+            //printf("[LOG] P1: Reading\"%s\"\n", connectionENC1->shmBlock);
+            bool p2_connected = (strcmp(connectionENC1->shmBlock, "P2_CONNECTED") == 0);
+
+            memset(connectionENC1->shmBlock, 0, BLOCK_SIZE);
+            if (p2_connected)
+            {
+                break;
+            }
+        }
+    }
+}
+
+void awaitUserInput(char *shmBlock, char *username)
+{
+    char line[BLOCK_SIZE];
+    while (true)
+    {
+        memset(line, 0, BLOCK_SIZE);
+        printf("%s: ", username);
+        if (fgets(line, sizeof(line), stdin))
+        {
+            if (line[0] != '\n' && line[0] != ' ')
+            {
+                // safe input to use
+                line[strcspn(line, "\r\n")] = 0;
+                break;
+            }
+        }
+    }
+    strncpy(shmBlock, line, BLOCK_SIZE);
+}
+
+bool isMsgTerm(char *msg)
+{
+    bool done = (strcmp(msg, "TERM") == 0);
+    return done;
+}
