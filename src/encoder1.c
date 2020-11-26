@@ -25,6 +25,15 @@ int main(int argc, char **argv)
     signalP2Connection(connectionP1, connectionChannel);
     interactWithP1andChannel(connectionP1, connectionChannel);
 
+    sem_close(connectionP1->semConsumed);
+    sem_close(connectionP1->semProduced);
+    detachMemoryBlock(connectionP1->shmBlock);
+    free(connectionP1);
+    sem_close(connectionChannel->semConsumed);
+    sem_close(connectionChannel->semProduced);
+    detachMemoryBlock(connectionChannel->shmBlock);
+    free(connectionChannel);
+
     return 0;
 }
 

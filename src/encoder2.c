@@ -10,6 +10,15 @@ int main(void)
 
     interactWithP2andChannel(connectionP2, connectionChannel);
 
+    sem_close(connectionP2->semConsumed);
+    sem_close(connectionP2->semProduced);
+    detachMemoryBlock(connectionP2->shmBlock);
+    free(connectionP2);
+    sem_close(connectionChannel->semConsumed);
+    sem_close(connectionChannel->semProduced);
+    detachMemoryBlock(connectionChannel->shmBlock);
+    free(connectionChannel);
+
     return 0;
 }
 

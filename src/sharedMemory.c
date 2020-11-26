@@ -70,3 +70,8 @@ void semFailed(sem_t *sem, char *errorMsg)
         exit(EXIT_FAILURE);
     }
 }
+
+void freeConnectionDet(ConnectionDetails *connDet)
+{
+    free(connDet);
+}

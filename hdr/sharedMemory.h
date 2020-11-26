@@ -16,5 +16,6 @@ bool detachMemoryBlock(char *block);
 bool destroyMemoryBlock(char *fileName);
 void isBlockNull(char *block);
 void semFailed(sem_t *sem, char *errorMsg);
+void freeConnectionDet(ConnectionDetails *connDet);
 
 #endif

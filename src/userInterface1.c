@@ -62,6 +62,7 @@ void setUpLinking()
     sem_close(semP1);
     sem_close(semENC1);
     detachMemoryBlock(shmBlock);
+    free(connectionENC1);
 }
 
 void interactWithENC1(ConnectionDetails *connectionENC1)
@@ -74,6 +75,7 @@ void interactWithENC1(ConnectionDetails *connectionENC1)
     if (isMsgTerm(connectionENC1->shmBlock))
     {
         puts("Closing the chat ...");
+        return;
         ///
     }
     //
@@ -83,8 +85,7 @@ void interactWithENC1(ConnectionDetails *connectionENC1)
         if (strlen(connectionENC1->shmBlock) > 0)
         {
             //printf("[LOG] P1: Reading \"%s\"\n", connectionENC1->shmBlock);
-            bool done = (strcmp(connectionENC1->shmBlock, "TERM") == 0);
-            if (done)
+            if (isMsgTerm(connectionENC1->shmBlock))
             {
                 puts("Closing the chat ...");
                 memset(connectionENC1->shmBlock, 0, BLOCK_SIZE);
@@ -99,5 +100,10 @@ void interactWithENC1(ConnectionDetails *connectionENC1)
         memset(connectionENC1->shmBlock, 0, BLOCK_SIZE);
         awaitUserInput(connectionENC1->shmBlock, "P1");
         sem_post(connectionENC1->semProduced); // notify ENC1 to read P1's message
+        if (isMsgTerm(connectionENC1->shmBlock))
+        {
+            puts("Closing the chat ...");
+            break;
+        }
     }
 }

@@ -21,10 +21,11 @@
 # TEST_FLAGS += -I./test
 
 # # Valgrind flags
-# VFLAGS  = --quiet
-# VFLAGS += --tool=memcheck
-# VFLAGS += --leak-check=full
-# VFLAGS += --error-exitcode=1
+VFLAGS  = --quiet
+VFLAGS += --tool=memcheck
+VFLAGS += --leak-check=full
+VFLAGS += --error-exitcode=1
+VFLAGS += --trace-children=yes
 
 # SOURCE := $(shell find ./src -name '*.c' -not -name 'main.c')
 # MAIN := 'src/main.c'
@@ -120,7 +121,14 @@ userInterface1 : $(userInterface1)
 
 userInterface2 : $(userInterface2)
 		cc $(CC_FLAGS) -o userInterface2 $(userInterface2) $(LDFLAGS)
-		
+
+run1:
+	@valgrind $(VFLAGS) ./userInterface1 -p 27
+	@echo "Memory check passed"
+
+run2:
+	@valgrind $(VFLAGS) ./userInterface2
+	@echo "Memory check passed"
 
 # src/channel.o : hdr/includes.h
 # src/encoder1.o : hdr/includes.h
