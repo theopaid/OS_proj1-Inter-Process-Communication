@@ -1,17 +1,31 @@
 #include "../hdr/includes.h"
 
 int propability;
+FILE *fptr;
 
 int main(int argc, char **argv)
 {
     getArgs(&propability, argv);
-    //printf("CHANNEL: propability is %d %% \n", propabiblity);
-    //wait(NULL);
-    //puts("CHANNEL: Waiting for P2 to connect to the Channel ...");
+    fptr = fopen("chatLog.txt", "w");
+    if (fptr == NULL)
+    {
+        printf("Could not open file");
+    }
+
     ConnectionDetails *connectionENC1 = setUpLinkingWithENC1();
     ConnectionDetails *connectionENC2 = setUpLinkingWithENC2();
     signalP2Connection(connectionENC1, connectionENC2);
     interactWithENC1andENC2(connectionENC1, connectionENC2);
+
+    sem_close(connectionENC1->semConsumed);
+    sem_close(connectionENC1->semProduced);
+    detachMemoryBlock(connectionENC1->shmBlock);
+    free(connectionENC1);
+    sem_close(connectionENC2->semConsumed);
+    sem_close(connectionENC2->semProduced);
+    detachMemoryBlock(connectionENC2->shmBlock);
+    free(connectionENC2);
+    fclose(fptr);
 
     return 0;
 }
@@ -30,16 +44,27 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
             //printf("[LOG] Channel: Reading \"%s\"\n", connectionENC1->shmBlock);
             if (isMsgTerm(connectionENC1->shmBlock))
             {
+                strncpy(connectionENC2->shmBlock, "TERM", BLOCK_SIZE);
+                sem_post(connectionENC2->semProduced);
+                break;
                 // free and detach
             }
             char msgFromENC1[BLOCK_SIZE];
             strncpy(msgFromENC1, connectionENC1->shmBlock, BLOCK_SIZE);
             zeroOutString(connectionENC1->shmBlock);
+            if (strcmp(msgFromENC1, "RESEND") == 0)
+            {
+                fprintf(fptr, "[LOG] ENC1 requests message to be resent.\n");
+            }
+            else
+            {
+                fprintf(fptr, "P1: %s\n", msgFromENC1 + 16);
+            }
             if (rnd_number <= propability && !isMsgTerm(msgFromENC1) && !(strcmp(msgFromENC1, "RESEND") == 0))
             {
                 printf("alteredENC1 with rnd: %d\n", rnd_number);
                 printf("prev: %s\n", msgFromENC1);
-                msgFromENC1[16] = (msgFromENC1[16] + 10) % 50; // alter the message
+                msgFromENC1[16] = msgFromENC1[16] + 1; // alter the message
                 printf("after: %s\n", msgFromENC1);
             }
             strncpy(connectionENC2->shmBlock, msgFromENC1, BLOCK_SIZE);
@@ -56,11 +81,22 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
             //printf("[LOG] Channel: Reading \"%s\"\n", connectionENC2->shmBlock);
             if (isMsgTerm(connectionENC2->shmBlock))
             {
+                strncpy(connectionENC1->shmBlock, "TERM", BLOCK_SIZE);
+                sem_post(connectionENC1->semProduced);
+                break;
                 // free and detach
             }
             char msgFromENC2[BLOCK_SIZE];
             strncpy(msgFromENC2, connectionENC2->shmBlock, BLOCK_SIZE);
             zeroOutString(connectionENC2->shmBlock);
+            if (strcmp(msgFromENC2, "RESEND") == 0)
+            {
+                fprintf(fptr, "[LOG] ENC2 requests message to be resent.\n");
+            }
+            else
+            {
+                fprintf(fptr, "P2: %s\n", msgFromENC2 + 16);
+            }
             if (rnd_number <= propability && !isMsgTerm(msgFromENC2) && !(strcmp(msgFromENC2, "RESEND") == 0))
             {
                 printf("alteredENC2 with rnd: %d\n", rnd_number);

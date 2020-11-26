@@ -17,6 +17,11 @@ int main(void)
     ConnectionDetails *connectionENC2 = setUpLinkingP2withENC2();
     interactWithENC2(connectionENC2);
 
+    sem_close(connectionENC2->semConsumed);
+    sem_close(connectionENC2->semProduced);
+    detachMemoryBlock(connectionENC2->shmBlock);
+    free(connectionENC2);
+
     return 0;
 }
 
@@ -43,6 +48,11 @@ void interactWithENC2(ConnectionDetails *connectionENC2)
         memset(connectionENC2->shmBlock, 0, BLOCK_SIZE);
         awaitUserInput(connectionENC2->shmBlock, "P2");
         sem_post(connectionENC2->semProduced); // notify ENC2 to read P2's message
+        if (isMsgTerm(connectionENC2->shmBlock))
+        {
+            puts("Closing the chat ...");
+            break;
+        }
     }
 }
 
