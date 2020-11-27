@@ -30,9 +30,10 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
     zeroOutString(msgFromP2);
     char clearTextMsg[BLOCK_SIZE];
     zeroOutString(clearTextMsg);
-    char hashedString[MD5_DIGEST_LENGTH + 1];
-    //zeroOutHashedString(hashedString);
-    char hashFromMsg[MD5_DIGEST_LENGTH + 1];
+    unsigned char hashedString[BLOCK_SIZE];
+    zeroOutHashedString(hashedString);
+    unsigned char hashFromMsg[BLOCK_SIZE];
+    zeroOutHashedString(hashedString);
     bool shouldBreak = false;
     while (true)
     {
@@ -60,30 +61,34 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
                     zeroOutHashedString(hashedString);
                     MD5(msgFromP2, sizeof(msgFromP2), hashedString);
                     zeroOutString(connectionChannel->shmBlock);
-                    strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
-                    puts(connectionChannel->shmBlock);
-                    puts(msgFromP2);
-                    strcat(connectionChannel->shmBlock, msgFromP2);
-                    printf("sending:\n %s\n", connectionChannel->shmBlock);
+                    memcpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+                    memcpy(connectionChannel->shmBlock + 16, msgFromP2, strlen(msgFromP2) + 1);
+                    //printf("sending:\n %s\n", connectionChannel->shmBlock);
                     sem_post(connectionChannel->semProduced);
                 }
                 else
                 {
-                    strncpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
+                    memcpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
                     zeroOutString(connectionChannel->shmBlock);
+                    zeroOutString(clearTextMsg);
                     strcpy(clearTextMsg, msgFromChannel + 16);
                     zeroOutHashedString(hashedString);
+                    zeroOutHashedString(hashFromMsg);
                     MD5(clearTextMsg, sizeof(clearTextMsg), hashedString);
                     hashedString[16] = 0;
-                    strncpy(hashFromMsg, msgFromChannel, 16);
+                    memcpy(hashFromMsg, msgFromChannel, 16);
                     hashFromMsg[16] = 0;
-                    if (strcmp(hashedString, hashFromMsg) != 0)
+                    //printf("resending: %s\n", clearTextMsg);
+                    //printf("hashNew: %s\n", hashedString);
+                    //printf("hashMsg: %s\n", hashFromMsg);
+                    //printf("Allmsg : %s\n", msgFromChannel);
+                    if (memcmp(hashedString, hashFromMsg, 16) != 0)
                     { // msg must be resent
                         //puts("hmm");
-                        printf("resending: %s\n", clearTextMsg);
-                        printf("%s\n", hashedString);
-                        printf("%s\n", hashFromMsg);
-                        printf("og msg:\n %s\n", msgFromChannel);
+                        //printf("resending: %s\n", clearTextMsg);
+                        //printf("%s\n", hashedString);
+                        //printf("%s\n", hashFromMsg);
+                        //printf("og msg:\n %s\n", msgFromChannel);
                         strncpy(connectionChannel->shmBlock, "RESEND", BLOCK_SIZE);
                         sem_post(connectionChannel->semProduced);
                     }
@@ -118,9 +123,8 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
             zeroOutHashedString(hashedString);
             MD5(msgFromP2, sizeof(msgFromP2), hashedString);
             zeroOutString(connectionChannel->shmBlock);
-            strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
-            strcat(connectionChannel->shmBlock, msgFromP2);
-            // edit the message from Channel accordingly
+            memcpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+            memcpy(connectionChannel->shmBlock + 16, msgFromP2, strlen(msgFromP2) + 1);
             sem_post(connectionChannel->semProduced);
         }
         else

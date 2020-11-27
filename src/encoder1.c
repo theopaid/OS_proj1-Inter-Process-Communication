@@ -45,9 +45,10 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
     zeroOutString(msgFromChannel);
     char clearTextMsg[BLOCK_SIZE];
     zeroOutString(clearTextMsg);
-    char hashedString[MD5_DIGEST_LENGTH + 1];
-    //zeroOutHashedString(hashedString);
-    char hashFromMsg[MD5_DIGEST_LENGTH + 1];
+    unsigned char hashedString[BLOCK_SIZE];
+    zeroOutHashedString(hashedString);
+    unsigned char hashFromMsg[BLOCK_SIZE];
+    zeroOutHashedString(hashedString);
     while (true)
     {
         sem_wait(connectionP1->semConsumed);
@@ -67,9 +68,8 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
             zeroOutHashedString(hashedString);
             MD5(msgFromP1, sizeof(msgFromP1), hashedString);
             zeroOutString(connectionChannel->shmBlock);
-            strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
-            strcat(connectionChannel->shmBlock, msgFromP1);
-
+            memcpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+            memcpy((connectionChannel->shmBlock) + 16, msgFromP1, strlen(msgFromP1) + 1);
             sem_post(connectionChannel->semProduced);
         }
         else
@@ -85,7 +85,6 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
                 bool resendLastMsg = (strcmp(connectionChannel->shmBlock, "RESEND") == 0);
                 if (isMsgTerm(connectionChannel->shmBlock))
                 {
-                    // free and detach
                     strncpy(connectionP1->shmBlock, connectionChannel->shmBlock, BLOCK_SIZE);
                     sem_post(connectionP1->semProduced);
                     break;
@@ -95,27 +94,33 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
                     zeroOutHashedString(hashedString);
                     MD5(msgFromP1, sizeof(msgFromP1), hashedString);
                     zeroOutString(connectionChannel->shmBlock);
-                    strncpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
-                    strcat(connectionChannel->shmBlock, msgFromP1);
+                    memcpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
+                    memcpy(connectionChannel->shmBlock + 16, msgFromP1, strlen(msgFromP1) + 1);
                     sem_post(connectionChannel->semProduced);
                 }
                 else
                 {
-                    strncpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
+                    // Compare the checksum for message validity
+                    memcpy(msgFromChannel, connectionChannel->shmBlock, BLOCK_SIZE);
                     zeroOutString(connectionChannel->shmBlock);
+                    zeroOutString(clearTextMsg);
                     strcpy(clearTextMsg, msgFromChannel + 16);
                     zeroOutHashedString(hashedString);
+                    zeroOutHashedString(hashFromMsg);
                     MD5(clearTextMsg, sizeof(clearTextMsg), hashedString);
                     hashedString[16] = 0;
-                    strncpy(hashFromMsg, msgFromChannel, 16);
+                    memcpy(hashFromMsg, msgFromChannel, 16);
                     hashFromMsg[16] = 0;
-                    if (strcmp(hashedString, hashFromMsg) != 0)
+                    //printf("hashNew: %s\n", hashedString);
+                    //printf("hashMsg: %s\n", hashFromMsg);
+                    //printf("Allmsg : %s\n", msgFromChannel);
+                    if (memcmp(hashedString, hashFromMsg, 16) != 0)
                     { // msg must be resent
                         //puts("hmm1");
-                        printf("resending: %s\n", clearTextMsg);
-                        printf("%s\n", hashedString);
-                        printf("%s\n", hashFromMsg);
-                        printf("og msg:\n %s\n", msgFromChannel);
+                        // printf("resending: %s\n", clearTextMsg);
+                        // printf("%s\n", hashedString);
+                        //printf("%s\n", hashFromMsg);
+                        // printf("og msg:\n %s\n", msgFromChannel);
                         strncpy(connectionChannel->shmBlock, "RESEND", BLOCK_SIZE);
                         sem_post(connectionChannel->semProduced);
                     }

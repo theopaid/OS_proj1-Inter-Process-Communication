@@ -1,4 +1,0 @@
-P1: GIA NA DOUME
-[LOG] ENC2 requests message to be resent.
-P1: GIA NA DOUME
-P2: namaste
