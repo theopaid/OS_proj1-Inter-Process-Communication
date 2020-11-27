@@ -129,5 +129,5 @@ void zeroOutString(char *msg)
 
 void zeroOutHashedString(unsigned char *msg)
 {
-    memset(msg, 0, MD5_DIGEST_LENGTH);
+    memset(msg, 0, BLOCK_SIZE);
 }

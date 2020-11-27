@@ -50,7 +50,7 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
                 // free and detach
             }
             char msgFromENC1[BLOCK_SIZE];
-            strncpy(msgFromENC1, connectionENC1->shmBlock, BLOCK_SIZE);
+            memcpy(msgFromENC1, connectionENC1->shmBlock, BLOCK_SIZE);
             zeroOutString(connectionENC1->shmBlock);
             if (strcmp(msgFromENC1, "RESEND") == 0)
             {
@@ -62,12 +62,12 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
             }
             if (rnd_number <= propability && !isMsgTerm(msgFromENC1) && !(strcmp(msgFromENC1, "RESEND") == 0))
             {
-                printf("alteredENC1 with rnd: %d\n", rnd_number);
-                printf("prev: %s\n", msgFromENC1);
+                //printf("alteredENC1 with rnd: %d\n", rnd_number);
+                //printf("prev: %s\n", msgFromENC1);
                 msgFromENC1[16] = msgFromENC1[16] + 1; // alter the message
-                printf("after: %s\n", msgFromENC1);
+                //printf("after: %s\n", msgFromENC1);
             }
-            strncpy(connectionENC2->shmBlock, msgFromENC1, BLOCK_SIZE);
+            memcpy(connectionENC2->shmBlock, msgFromENC1, BLOCK_SIZE);
             sem_post(connectionENC2->semProduced);
         }
         else
@@ -87,7 +87,7 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
                 // free and detach
             }
             char msgFromENC2[BLOCK_SIZE];
-            strncpy(msgFromENC2, connectionENC2->shmBlock, BLOCK_SIZE);
+            memcpy(msgFromENC2, connectionENC2->shmBlock, BLOCK_SIZE);
             zeroOutString(connectionENC2->shmBlock);
             if (strcmp(msgFromENC2, "RESEND") == 0)
             {
@@ -99,12 +99,12 @@ void interactWithENC1andENC2(ConnectionDetails *connectionENC1, ConnectionDetail
             }
             if (rnd_number <= propability && !isMsgTerm(msgFromENC2) && !(strcmp(msgFromENC2, "RESEND") == 0))
             {
-                printf("alteredENC2 with rnd: %d\n", rnd_number);
-                printf("prev: %s\n", msgFromENC2);
+                //printf("alteredENC2 with rnd: %d\n", rnd_number);
+                //printf("prev: %s\n", msgFromENC2);
                 msgFromENC2[16] = (msgFromENC2[16] + 10) % 50; // alter the message
-                printf("prev: %s\n", msgFromENC2);
+                //printf("prev: %s\n", msgFromENC2);
             }
-            strncpy(connectionENC1->shmBlock, msgFromENC2, BLOCK_SIZE);
+            memcpy(connectionENC1->shmBlock, msgFromENC2, BLOCK_SIZE);
             sem_post(connectionENC1->semProduced);
         }
         else
