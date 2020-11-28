@@ -18,11 +18,15 @@ int main(int argc, char **argv)
     interactWithENC1andENC2(connectionENC1, connectionENC2);
 
     sem_close(connectionENC1->semConsumed);
+    sem_unlink(ENC1toCHAN);
     sem_close(connectionENC1->semProduced);
+    sem_unlink(CHANtoENC1);
     detachMemoryBlock(connectionENC1->shmBlock);
     free(connectionENC1);
     sem_close(connectionENC2->semConsumed);
+    sem_unlink(ENC2toCHAN);
     sem_close(connectionENC2->semProduced);
+    sem_unlink(CHANtoENC2);
     detachMemoryBlock(connectionENC2->shmBlock);
     free(connectionENC2);
     fclose(fptr);

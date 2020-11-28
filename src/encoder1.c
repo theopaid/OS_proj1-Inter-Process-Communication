@@ -24,11 +24,15 @@ int main(int argc, char **argv)
     interactWithP1andChannel(connectionP1, connectionChannel);
 
     sem_close(connectionP1->semConsumed);
+    sem_unlink(P1toENC1);
     sem_close(connectionP1->semProduced);
+    sem_unlink(ENC1toP1);
     detachMemoryBlock(connectionP1->shmBlock);
     free(connectionP1);
     sem_close(connectionChannel->semConsumed);
+    sem_unlink(CHANtoENC1);
     sem_close(connectionChannel->semProduced);
+    sem_unlink(ENC1toCHAN);
     detachMemoryBlock(connectionChannel->shmBlock);
     free(connectionChannel);
 
