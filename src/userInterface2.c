@@ -17,7 +17,9 @@ int main(void)
     interactWithENC2(connectionENC2);
 
     sem_close(connectionENC2->semConsumed);
+    sem_unlink(ENC2toP2);
     sem_close(connectionENC2->semProduced);
+    sem_unlink(P2toENC2);
     detachMemoryBlock(connectionENC2->shmBlock);
     free(connectionENC2);
 

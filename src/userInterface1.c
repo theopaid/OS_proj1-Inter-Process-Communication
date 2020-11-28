@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
 void setUpLinking()
 {
-    sem_unlink(P1toENC1);
+    sem_unlink(P1toENC1); // just to be safe
     sem_unlink(ENC1toP1);
     // setup the semaphores
     sem_t *semP1 = sem_open(P1toENC1, O_CREAT, 0660, 0);
@@ -59,7 +59,9 @@ void setUpLinking()
     interactWithENC1(connectionENC1);
 
     sem_close(semP1);
+    sem_unlink(P1toENC1);
     sem_close(semENC1);
+    sem_unlink(ENC1toP1);
     detachMemoryBlock(shmBlock);
     free(connectionENC1);
 }
