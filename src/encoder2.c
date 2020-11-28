@@ -2,11 +2,10 @@
 
 int main(void)
 {
-    //puts("ENC2: Connecting to the channel ...");
     ConnectionDetails *connectionP2 = setUpLinkingENC2toP2();
     ConnectionDetails *connectionChannel = setUpLinkingENC2toChannel();
     strncpy(connectionChannel->shmBlock, "P2_CONNECTED", BLOCK_SIZE);
-    sem_post(connectionChannel->semProduced);
+    sem_post(connectionChannel->semProduced); // signal all processed that P2 connected
 
     interactWithP2andChannel(connectionP2, connectionChannel);
 
@@ -46,11 +45,9 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
             sem_wait(connectionChannel->semConsumed);
             if (strlen(connectionChannel->shmBlock) > 0)
             {
-                //printf("[LOG] ENC2: Reading \"%s\"\n", connectionChannel->shmBlock);
                 bool resendLastMsg = (strcmp(connectionChannel->shmBlock, "RESEND") == 0);
                 if (isMsgTerm(connectionChannel->shmBlock))
                 {
-                    // free and detach
                     strncpy(connectionP2->shmBlock, connectionChannel->shmBlock, BLOCK_SIZE);
                     sem_post(connectionP2->semProduced);
                     shouldBreak = true;
@@ -63,7 +60,6 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
                     zeroOutString(connectionChannel->shmBlock);
                     memcpy(connectionChannel->shmBlock, hashedString, MD5_DIGEST_LENGTH);
                     memcpy(connectionChannel->shmBlock + 16, msgFromP2, strlen(msgFromP2) + 1);
-                    //printf("sending:\n %s\n", connectionChannel->shmBlock);
                     sem_post(connectionChannel->semProduced);
                 }
                 else
@@ -78,23 +74,14 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
                     hashedString[16] = 0;
                     memcpy(hashFromMsg, msgFromChannel, 16);
                     hashFromMsg[16] = 0;
-                    //printf("resending: %s\n", clearTextMsg);
-                    //printf("hashNew: %s\n", hashedString);
-                    //printf("hashMsg: %s\n", hashFromMsg);
-                    //printf("Allmsg : %s\n", msgFromChannel);
                     if (memcmp(hashedString, hashFromMsg, 16) != 0)
                     { // msg must be resent
-                        //puts("hmm");
-                        //printf("resending: %s\n", clearTextMsg);
-                        //printf("%s\n", hashedString);
-                        //printf("%s\n", hashFromMsg);
-                        //printf("og msg:\n %s\n", msgFromChannel);
                         strncpy(connectionChannel->shmBlock, "RESEND", BLOCK_SIZE);
                         sem_post(connectionChannel->semProduced);
                     }
                     else
                     {
-
+                        // Send only the clear text message to P2
                         strncpy(connectionP2->shmBlock, msgFromChannel + 16, BLOCK_SIZE);
                         sem_post(connectionP2->semProduced);
                         break;
@@ -110,10 +97,8 @@ void interactWithP2andChannel(ConnectionDetails *connectionP2, ConnectionDetails
         sem_wait(connectionP2->semConsumed);
         if (strlen(connectionP2->shmBlock) > 0)
         {
-            //printf("[LOG] ENC2: Reading \"%s\"\n", connectionP2->shmBlock);
             if (isMsgTerm(connectionP2->shmBlock))
             {
-                // free and detach
                 strncpy(connectionChannel->shmBlock, connectionP2->shmBlock, BLOCK_SIZE);
                 sem_post(connectionChannel->semProduced);
                 break;
@@ -161,10 +146,6 @@ ConnectionDetails *setUpLinkingENC2toP2()
     connectionP2->shmBlock = shmBlock;
 
     return connectionP2;
-
-    // sem_close(semP1);
-    // sem_close(semENC1);
-    // detachMemoryBlock(shmBlock);
 }
 
 ConnectionDetails *setUpLinkingENC2toChannel()
@@ -194,8 +175,4 @@ ConnectionDetails *setUpLinkingENC2toChannel()
     connectionChannel->shmBlock = shmBlock;
 
     return connectionChannel;
-
-    // sem_close(semP1);
-    // sem_close(semENC1);
-    // detachMemoryBlock(shmBlock);
 }

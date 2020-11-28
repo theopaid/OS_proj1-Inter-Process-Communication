@@ -56,10 +56,6 @@ void printInsights()
     puts(" ");
     puts("|========== Insights ==========|");
     puts(" ");
-    //printHashingBenchmarks();
-    //printMatchesCount();
-    //printVisitedSpecNodesCount();
-    //printExecTime();
     puts(" ");
     puts("|==============================|");
 }
@@ -84,7 +80,6 @@ void awaitP2Connection(ConnectionDetails *connectionENC1)
         sem_wait(connectionENC1->semConsumed); // wait for the ENC1 to write a message to P1
         if (strlen(connectionENC1->shmBlock) > 0)
         {
-            //printf("[LOG] P1: Reading\"%s\"\n", connectionENC1->shmBlock);
             bool p2_connected = (strcmp(connectionENC1->shmBlock, "P2_CONNECTED") == 0);
 
             memset(connectionENC1->shmBlock, 0, BLOCK_SIZE);

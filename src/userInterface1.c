@@ -23,7 +23,6 @@ int main(int argc, char **argv)
         }
         return 0;
     }
-    //wait(NULL);
     puts("Waiting for P2 to connect to the Channel ...");
     setUpLinking();
 
@@ -76,15 +75,12 @@ void interactWithENC1(ConnectionDetails *connectionENC1)
     {
         puts("Closing the chat ...");
         return;
-        ///
     }
-    //
     while (true)
     {
         sem_wait(connectionENC1->semConsumed); // wait for the ENC1 to write a message to P1
         if (strlen(connectionENC1->shmBlock) > 0)
         {
-            //printf("[LOG] P1: Reading \"%s\"\n", connectionENC1->shmBlock);
             if (isMsgTerm(connectionENC1->shmBlock))
             {
                 puts("Closing the chat ...");

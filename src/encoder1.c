@@ -18,8 +18,6 @@ int main(int argc, char **argv)
         }
         return 0;
     }
-    //wait(NULL);
-    //puts("ENC1: Waiting for P2 to connect to the Channel ...");
     ConnectionDetails *connectionP1 = setUpLinkingWithP1();
     ConnectionDetails *connectionChannel = setUpLinkingWithChannel();
     signalP2Connection(connectionP1, connectionChannel);
@@ -54,11 +52,8 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
         sem_wait(connectionP1->semConsumed);
         if (strlen(connectionP1->shmBlock) > 0)
         {
-            //printf("[LOG] ENC1: Reading \"%s\"\n", connectionP1->shmBlock);
             if (isMsgTerm(connectionP1->shmBlock))
             {
-
-                // free and detach
                 strncpy(connectionChannel->shmBlock, connectionP1->shmBlock, BLOCK_SIZE);
                 sem_post(connectionChannel->semProduced);
                 break;
@@ -81,7 +76,6 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
             sem_wait(connectionChannel->semConsumed);
             if (strlen(connectionChannel->shmBlock) > 0)
             {
-                //printf("[LOG] ENC1: Reading \"%s\"\n", connectionChannel->shmBlock);
                 bool resendLastMsg = (strcmp(connectionChannel->shmBlock, "RESEND") == 0);
                 if (isMsgTerm(connectionChannel->shmBlock))
                 {
@@ -111,22 +105,14 @@ void interactWithP1andChannel(ConnectionDetails *connectionP1, ConnectionDetails
                     hashedString[16] = 0;
                     memcpy(hashFromMsg, msgFromChannel, 16);
                     hashFromMsg[16] = 0;
-                    //printf("hashNew: %s\n", hashedString);
-                    //printf("hashMsg: %s\n", hashFromMsg);
-                    //printf("Allmsg : %s\n", msgFromChannel);
                     if (memcmp(hashedString, hashFromMsg, 16) != 0)
                     { // msg must be resent
-                        //puts("hmm1");
-                        // printf("resending: %s\n", clearTextMsg);
-                        // printf("%s\n", hashedString);
-                        //printf("%s\n", hashFromMsg);
-                        // printf("og msg:\n %s\n", msgFromChannel);
                         strncpy(connectionChannel->shmBlock, "RESEND", BLOCK_SIZE);
                         sem_post(connectionChannel->semProduced);
                     }
                     else
                     {
-                        // edit the message from Channel accordingly
+                        // Send only the clear text message to P1
                         strncpy(connectionP1->shmBlock, msgFromChannel + 16, BLOCK_SIZE);
                         sem_post(connectionP1->semProduced);
                         break;
@@ -168,11 +154,6 @@ ConnectionDetails *setUpLinkingWithP1()
     connectionP1->shmBlock = shmBlock;
 
     return connectionP1;
-    //interactWithENC1(semP1, semENC1, shmBlock);
-
-    // sem_close(semP1);
-    // sem_close(semENC1);
-    // detachMemoryBlock(shmBlock);
 }
 
 ConnectionDetails *setUpLinkingWithChannel()
@@ -204,8 +185,4 @@ ConnectionDetails *setUpLinkingWithChannel()
     connectionChannel->shmBlock = shmBlock;
 
     return connectionChannel;
-
-    // sem_close(semP1);
-    // sem_close(semENC1);
-    // detachMemoryBlock(shmBlock);
 }

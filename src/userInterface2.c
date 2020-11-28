@@ -12,7 +12,6 @@ int main(void)
         }
         return 0;
     }
-    //wait(NULL);
     puts("P2: Connecting to the channel ...");
     ConnectionDetails *connectionENC2 = setUpLinkingP2withENC2();
     interactWithENC2(connectionENC2);
@@ -32,7 +31,6 @@ void interactWithENC2(ConnectionDetails *connectionENC2)
         sem_wait(connectionENC2->semConsumed); // wait for the ENC2 to write a message to P2
         if (strlen(connectionENC2->shmBlock) > 0)
         {
-            //printf("[LOG] P2: Reading \"%s\"\n", connectionENC2->shmBlock);
             if (isMsgTerm(connectionENC2->shmBlock))
             {
                 puts("Closing the chat ...");
@@ -85,8 +83,4 @@ ConnectionDetails *setUpLinkingP2withENC2()
     connectionENC2->shmBlock = shmBlock;
 
     return connectionENC2;
-
-    // sem_close(semP1);
-    // sem_close(semENC1);
-    // detachMemoryBlock(shmBlock);
 }
